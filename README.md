@@ -2,11 +2,6 @@
 
 Leveraging Microsoft Defender for Endpoint & KQL to Investigate Network Anomalies
 
-
-## Created By:
-- **Author Name**: Richard Edwards
-- **Author Contact**: https://www.linkedin.com/in/richard-demetrius-edwards
-- **Date**: April, 21 2025
 ---
 
 ## Lab Overview
@@ -31,12 +26,15 @@ Suspected TTP:
 Unauthorized port scanning or data exfiltration
 KQL Query 1 - Identify Anomalous Connections:
 
-kql
+#### Related Queries:
+```kql
 DeviceNetworkEvents
 | where DeviceName contains "windows10-"
 | where ActionType == "ConnectionFailed"
 | summarize FailedConnectionsAttempts = count() by DeviceName, ActionType, LocalIP
 | order by FailedConnectionsAttempts desc
+```
+
 
 
 <img width="1390" alt="Query1-results" src="https://github.com/user-attachments/assets/c1155d78-c306-4de3-aeff-f7e6bf6512d7" />
@@ -51,12 +49,15 @@ Sequential connection attempts to multiple ports on 10.1.0.37
 Pattern matches known port scanning behavior
 KQL Query 2 - Isolate Target IP Activity:
 
-kql
+```kql
 let IPInQuestion = "10.1.0.37";
 DeviceNetworkEvents
 | where ActionType == "ConnectionFailed"
 | where LocalIP == IPInQuestion
 | order by Timestamp desc
+```
+
+
 
 <img width="1233" alt="Observing-failedconnections-10 1 0 37" src="https://github.com/user-attachments/assets/f433b398-dfb6-48d8-8c6e-dee5412e62f7" />
 
@@ -70,7 +71,7 @@ Identified earliest scan timestamp (2025-04-21T17:05:01Z)
 Correlated with process creation events
 KQL Query 3 - Trace Suspicious Process:
 
-kql
+```kql
 let VMName = "windows10-vm-ri";
 let specificTime = datetime(2025-04-21T17:05:01.87382Z);
 DeviceProcessEvents
@@ -78,6 +79,9 @@ DeviceProcessEvents
 | where DeviceName == VMName
 | order by Timestamp desc
 | project Timestamp, FileName, InitiatingProcessCommandLine, AccountName
+```
+
+
 
 <img width="1139" alt="DeviceProcessEvents-query" src="https://github.com/user-attachments/assets/88e539be-ed9c-4c7d-86a7-d5fee968258e" />
 
@@ -89,8 +93,12 @@ Discovery: PowerShell executing portscan.ps1 script.
 Forensic Action:
 
 Retrieved script contents despite file deletion:
-powershell
+
+```powershell
 Get-Content -Path 'C:\ProgramData\portscan.ps1'
+```
+
+
 
 <img width="1440" alt="portscan ps1-powershell" src="https://github.com/user-attachments/assets/33061b6c-6ede-4a87-a379-0190e3cdf6f0" />
 
@@ -101,8 +109,9 @@ Finding: Confirmed port scanning functionality via PowerShell.
 
 Critical Observations:
 
-Script executed under WINDOWS account (non-standard context)
+The script was executed under 'windows' account (non-standard context)
 No legitimate business purpose for this activity
+
 
 <img width="1276" alt="AccountName-windows" src="https://github.com/user-attachments/assets/7c23ff4b-3668-4447-9eab-4bc6788bbd90" />
 
@@ -117,7 +126,7 @@ Initiated reimaging process
 
 Final Determination:
 
-Day 3 intern conducted unauthorized scanning for KQL training
+The intern conducted unauthorized scanning for KQL training
 Legacy system vulnerability to scan traffic
 Remediation Steps:
 
@@ -151,3 +160,11 @@ Actionable Mitigations
 2. Defense-in-Depth: Technical controls (e.g., least privilege) must align with procedural controls (training).
 Lab Value: This exercise mirrors real-world threat hunting workflows, demonstrating proficiency in EDR tools, KQL, and incident response – critical skills for SOC/blue team roles.
 
+
+
+
+
+
+- **Author Name**: Richard Edwards
+- **Author Contact**: https://www.linkedin.com/in/richard-demetrius-edwards
+- **Date**: April, 21 2025
